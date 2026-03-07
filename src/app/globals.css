@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --board-size: 480px;
+}
+
+/* Chessground-compatible scroll */
+::-webkit-scrollbar       { width: 5px; }
+::-webkit-scrollbar-track { background: #0f172a; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+/* react-chessboard arrow colors */
+.arrow-green    { stroke: #22c55e; }
+.arrow-paleblue { stroke: #93c5fd; }
