@@ -30,13 +30,20 @@ export default function OpeningExplorer({ fen, onPlay }: {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
   const [retry, setRetry]     = useState(0);
+  const [megaOn, setMegaOn]   = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  const isOnline = source === 'masters' || source === 'lichess';
+  // ¿está el libro de la Mega disponible?
+  useEffect(() => {
+    fetch('/api/mega-status').then((r) => r.json()).then((j) => setMegaOn(!!j.available)).catch(() => {});
+  }, [retry]);
+
+  // Server = se pide al backend (Lichess online o Mega local)
+  const isServer = source === 'masters' || source === 'lichess' || source === 'mega';
 
   useEffect(() => {
     setError(null);
-    if (!isOnline) {
+    if (!isServer) {
       const db = useDatabasesStore.getState().get(source);
       setData(db ? lookupDb(db.index, fen) : { white: 0, draws: 0, black: 0, moves: [] });
       setLoading(false);
@@ -51,18 +58,23 @@ export default function OpeningExplorer({ fen, onPlay }: {
       fetch(url, { signal: ac.signal })
         .then((r) => (r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
         .then((j: ExplorerData & { error?: string }) => {
-          if (j.error) throw new Error('upstream');
+          if (j.error) throw new Error(j.error);
           setData(j); setLoading(false);
         })
-        .catch((e) => { if (e.name !== 'AbortError') { setError('Sin conexión a Lichess'); setLoading(false); } });
+        .catch((e) => {
+          if (e.name === 'AbortError') return;
+          setError(source === 'mega' ? 'Mega aún no disponible' : 'Sin conexión a Lichess');
+          setLoading(false);
+        });
     }, 250);
     return () => { clearTimeout(t); ac.abort(); };
-  }, [fen, source, retry, isOnline]);
+  }, [fen, source, retry, isServer]);
 
   const total = data ? data.white + data.draws + data.black : 0;
   const tabs: { id: string; label: string }[] = [
     { id: 'masters', label: 'Maestros' },
     { id: 'lichess', label: 'Online' },
+    ...(megaOn ? [{ id: 'mega', label: 'Mega 2026' }] : []),
     ...dbs.map((d) => ({ id: d.id, label: d.name })),
   ];
 

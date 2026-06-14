@@ -114,6 +114,8 @@ def cmd_aggregate(args):
             if n % 10_000_000 < 100000:
                 print(f"  insertadas {n:,} filas ({(time.time()-t0)/60:.1f} min)", flush=True)
         f.close()
+    con.commit()                 # consolida los inserts
+    con.isolation_level = None   # autocommit: evita "cannot VACUUM from within a transaction"
     print(f"agrupando {n:,} filas…", flush=True)
     con.execute("""CREATE TABLE book AS
         SELECT k,
@@ -126,7 +128,6 @@ def cmd_aggregate(args):
     con.execute("DROP TABLE raw")
     con.execute("CREATE INDEX idx_book_k ON book(k)")
     con.execute("VACUUM")
-    con.commit()
     rows = con.execute("SELECT COUNT(*) FROM book").fetchone()[0]
     con.close()
     print(f"LISTO aggregate: {rows:,} (posición,jugada) únicas en {(time.time()-t0)/60:.1f} min")

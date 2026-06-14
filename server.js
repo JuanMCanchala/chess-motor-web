@@ -9,6 +9,7 @@ const { WebSocketServer } = require('ws');
 const path             = require('path');
 const EngineBridge     = require('./server/engine-bridge');
 const StockfishBridge  = require('./server/stockfish-bridge');
+const mega             = require('./server/mega');
 
 const dev  = process.env.NODE_ENV !== 'production';
 const port = Number(process.env.PORT) || 3000;
@@ -45,9 +46,30 @@ app.prepare().then(() => {
   const server = createServer(async (req, res) => {
     const parsed = parse(req.url, true);
 
-    // Proxy del Opening Explorer de Lichess (evita problemas de red/CORS en el navegador)
+    // Estado de la Mega (¿libro disponible?)
+    if (parsed.pathname === '/api/mega-status') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ available: mega.available() }));
+      return;
+    }
+
+    // Opening Explorer
     if (parsed.pathname === '/api/explorer') {
       const fen = String(parsed.query.fen || '');
+
+      // Fuente local: Mega Database 2026
+      if (parsed.query.source === 'mega') {
+        const data = mega.query(fen);
+        if (!data) {
+          res.writeHead(503, { 'content-type': 'application/json' });
+          res.end(JSON.stringify({ error: 'mega-unavailable' }));
+        } else {
+          res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify(data));
+        }
+        return;
+      }
+
       const source = parsed.query.source === 'lichess' ? 'lichess' : 'masters';
       const url = source === 'lichess'
         ? `https://explorer.lichess.ovh/lichess?fen=${encodeURIComponent(fen)}` +
