@@ -1,5 +1,6 @@
 'use client';
 
+import HomeTab        from '@/components/HomeTab';
 import PlayTab        from '@/components/PlayTab';
 import AnalysisTab    from '@/components/AnalysisTab';
 import StudyTab       from '@/components/StudyTab';
@@ -16,6 +17,7 @@ import { useNavStore, Tab } from '@/store/navStore';
 import { Icon, IconName } from '@/components/Icon';
 
 const NAV: { tab: Tab; icon: IconName; label: string }[] = [
+  { tab: 'home',      icon: 'home',     label: 'Inicio' },
   { tab: 'analysis',  icon: 'grid',     label: 'Análisis' },
   { tab: 'play',      icon: 'play',     label: 'Jugar' },
   { tab: 'study',     icon: 'book',     label: 'Estudio' },
@@ -41,6 +43,7 @@ export default function Home() {
         <div className="flex flex-1 min-h-0">
           <Sidebar tab={tab} onTab={setTab} />
           <main className="flex-1 overflow-auto px-4 py-3">
+            {tab === 'home'      && <HomeTab />}
             {tab === 'analysis'  && <AnalysisTab />}
             {tab === 'play'      && <PlayTab />}
             {tab === 'study'     && <StudyTab />}

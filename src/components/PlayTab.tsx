@@ -8,6 +8,7 @@ import { useGameStore }                from '@/store/gameStore';
 import { useNavStore }                 from '@/store/navStore';
 import { useUiStore, boardColors }     from '@/store/uiStore';
 import { Icon }                        from './Icon';
+import { Button, Card, Segmented, Select } from './ui';
 import EvalBar                         from './EvalBar';
 import MoveHistory                     from './MoveHistory';
 
@@ -42,6 +43,11 @@ export default function PlayTab() {
   const store = useGameStore();
 
   const bc = boardColors(useUiStore((s) => s.boardTheme));
+
+  // Config de nueva partida (controlado)
+  const [colorSel, setColorSel] = useState<'white' | 'black' | 'random'>('white');
+  const [timeSel, setTimeSel]   = useState('3');
+  const [eloSel, setEloSel]     = useState('0');
 
   // Movimientos legales: { e2: ['e3','e4'], ... }
   const [dests, setDests] = useState<Record<string, string[]>>({});
@@ -94,21 +100,18 @@ export default function PlayTab() {
   // ── Inicio de partida ─────────────────────────────────────────────────────
 
   async function startGame() {
-    const colorSel = (document.getElementById('sel-color') as HTMLSelectElement).value;
-    const timeSel  = Number((document.getElementById('sel-time') as HTMLSelectElement).value);
-    const eloSel   = Number((document.getElementById('sel-elo') as HTMLSelectElement).value);
-
     const color: 'white' | 'black' =
-      colorSel === 'random' ? (Math.random() < 0.5 ? 'white' : 'black') : colorSel as 'white' | 'black';
+      colorSel === 'random' ? (Math.random() < 0.5 ? 'white' : 'black') : colorSel;
+    const timeNum = Number(timeSel);
 
     store.reset();
     store.setPlayerColor(color);
-    store.setTimeLimit(timeSel);
+    store.setTimeLimit(timeNum);
 
     const r = await wsCmd<{ ok: boolean; fen: string }>('new_game', {
       player_color: color,
-      time_limit:   timeSel,
-      elo:          eloSel,
+      time_limit:   timeNum,
+      elo:          Number(eloSel),
     });
     if (!r.ok) { alert('Error al iniciar la partida'); return; }
 
@@ -225,50 +228,45 @@ export default function PlayTab() {
 
         {/* Settings / pre-juego */}
         {!isGamePhase && (
-          <div className="bg-card border border-border rounded-lg p-4 flex flex-col gap-3">
-            <h3 className="text-accent font-semibold text-sm">Nueva partida</h3>
+          <Card className="p-4 flex flex-col gap-4">
+            <h3 className="text-fg font-semibold text-center">Nueva partida</h3>
 
-            <label className="flex flex-col gap-1 text-dim text-xs">
-              Color
-              <select id="sel-color" className="bg-base border border-border text-fg
-                                                rounded-md px-2 py-1.5 text-sm">
-                <option value="white">Blancas</option>
-                <option value="black">Negras</option>
-                <option value="random">Aleatorio</option>
-              </select>
-            </label>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-dim text-xs">Juegas con</span>
+              <Segmented<'white' | 'black' | 'random'>
+                value={colorSel} onChange={setColorSel} size="sm" className="w-full [&>button]:flex-1"
+                options={[
+                  { value: 'white', label: 'Blancas' },
+                  { value: 'black', label: 'Negras' },
+                  { value: 'random', label: 'Aleatorio' },
+                ]} />
+            </div>
 
-            <label className="flex flex-col gap-1 text-dim text-xs">
+            <label className="flex flex-col gap-1.5 text-dim text-xs">
               Tiempo del motor
-              <select id="sel-time" className="bg-base border border-border text-fg
-                                               rounded-md px-2 py-1.5 text-sm">
+              <Select value={timeSel} onChange={(e) => setTimeSel(e.target.value)}>
                 <option value="0.5">0.5 s (fácil)</option>
                 <option value="1">1 s</option>
                 <option value="3">3 s</option>
                 <option value="5">5 s</option>
                 <option value="10">10 s (difícil)</option>
-              </select>
+              </Select>
             </label>
 
-            <label className="flex flex-col gap-1 text-dim text-xs">
+            <label className="flex flex-col gap-1.5 text-dim text-xs">
               Fuerza (sparring)
-              <select id="sel-elo" defaultValue="0" className="bg-base border border-border text-fg
-                                              rounded-md px-2 py-1.5 text-sm">
+              <Select value={eloSel} onChange={(e) => setEloSel(e.target.value)}>
                 <option value="0">Máxima</option>
                 <option value="1320">≈1320</option>
                 <option value="1600">≈1600</option>
                 <option value="2000">≈2000</option>
                 <option value="2400">≈2400</option>
                 <option value="2800">≈2800</option>
-              </select>
+              </Select>
             </label>
 
-            <button onClick={startGame}
-                    className="w-full bg-accent text-white font-semibold py-2 rounded-md
-                               hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-1.5">
-              <Icon name="play" size={15} /> Iniciar
-            </button>
-          </div>
+            <Button variant="primary" icon="play" className="w-full" onClick={startGame}>Iniciar</Button>
+          </Card>
         )}
 
         {/* Historial de movimientos */}
@@ -294,27 +292,13 @@ export default function PlayTab() {
             )}
 
             <div className="flex gap-2">
-              <button onClick={undoMove} disabled={store.engineThinking || !store.gameActive}
-                      className="flex-1 bg-hover text-fg py-1.5 rounded-md text-sm
-                                 hover:opacity-80 disabled:opacity-40 transition-opacity
-                                 inline-flex items-center justify-center gap-1.5">
-                <Icon name="undo" size={14} /> Deshacer
-              </button>
-              <button
-                onClick={() => { store.setGameActive(false); store.setGameResult('resigned'); }}
-                disabled={!store.gameActive}
-                className="flex-1 bg-danger text-white py-1.5 rounded-md text-sm
-                           hover:opacity-80 disabled:opacity-40 transition-opacity
-                           inline-flex items-center justify-center gap-1.5">
-                <Icon name="x" size={14} /> Rendirse
-              </button>
+              <Button variant="subtle" icon="undo" className="flex-1" onClick={undoMove}
+                disabled={store.engineThinking || !store.gameActive}>Deshacer</Button>
+              <Button variant="danger" icon="x" className="flex-1" disabled={!store.gameActive}
+                onClick={() => { store.setGameActive(false); store.setGameResult('resigned'); }}>Rendirse</Button>
             </div>
-
-            <button onClick={() => { store.reset(); setDests({}); setSelectedSq(null); }}
-                    className="w-full bg-hover text-fg py-1.5 rounded-md text-sm
-                               hover:opacity-80 transition-opacity inline-flex items-center justify-center gap-1.5">
-              <Icon name="plus" size={14} /> Nueva partida
-            </button>
+            <Button variant="subtle" icon="plus" className="w-full"
+              onClick={() => { store.reset(); setDests({}); setSelectedSq(null); }}>Nueva partida</Button>
           </div>
         )}
 

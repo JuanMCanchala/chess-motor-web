@@ -5,6 +5,7 @@ import { useStudyStore } from '@/store/studyStore';
 import { useTreeStore } from '@/store/treeStore';
 import { useNavStore } from '@/store/navStore';
 import { Icon } from './Icon';
+import { Button, Card } from './ui';
 
 export default function FilesTab({ onOpenStudy }: { onOpenStudy: (id: string) => void }) {
   const studies = useStudyStore((s) => s.studies);
@@ -32,23 +33,17 @@ export default function FilesTab({ onOpenStudy }: { onOpenStudy: (id: string) =>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-fg flex items-center gap-2"><Icon name="folder" size={18} /> Files</h2>
         <div className="flex gap-2">
-          <button onClick={() => setImporting((v) => !v)}
-            className="bg-hover text-fg px-3 py-1.5 rounded-md text-sm inline-flex items-center gap-1.5 hover:opacity-80">
-            <Icon name="download" size={14} /> Importar PGN
-          </button>
-          <button onClick={createRepertoire}
-            className="bg-accent text-white px-3 py-1.5 rounded-md text-sm inline-flex items-center gap-1.5 hover:opacity-90">
-            <Icon name="plus" size={14} /> Crear repertorio
-          </button>
+          <Button variant="subtle" icon="download" onClick={() => setImporting((v) => !v)}>Importar PGN</Button>
+          <Button variant="primary" icon="plus" onClick={createRepertoire}>Crear repertorio</Button>
         </div>
       </div>
 
       {importing && (
-        <div className="bg-card border border-border rounded-lg p-3 mb-4 flex flex-col gap-2 max-w-2xl">
+        <Card className="p-3 mb-4 flex flex-col gap-2 max-w-2xl">
           <textarea value={pgn} onChange={(e) => setPgn(e.target.value)} placeholder="Pega un PGN para abrirlo en Análisis…" rows={5}
-            className="bg-base border border-border text-fg rounded-md px-3 py-2 text-xs font-mono focus:border-accent outline-none resize-y" />
-          <button onClick={openPgn} className="self-start bg-accent text-white px-3 py-1.5 rounded-md text-sm">Abrir en Análisis</button>
-        </div>
+            className="bg-base border border-border text-fg rounded-lg px-3 py-2 text-xs font-mono focus:border-accent outline-none resize-y" />
+          <Button variant="primary" className="self-start" onClick={openPgn}>Abrir en Análisis</Button>
+        </Card>
       )}
 
       <div className="flex gap-2 mb-3">

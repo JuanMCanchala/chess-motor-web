@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useDatabasesStore } from '@/store/databasesStore';
 import { Icon } from './Icon';
+import { Button, Card, Input } from './ui';
 
 const ONLINE = [
   { name: 'Lichess — Maestros', desc: 'Millones de partidas de maestros (online). En Análisis → Database → Maestros.' },
@@ -41,14 +42,14 @@ export default function DatabasesTab() {
           <h3 className="text-accent text-sm font-semibold mb-2">Bases locales</h3>
           <div className="grid grid-cols-3 gap-3 mb-6">
             {dbs.map((d) => (
-              <div key={d.id} className="bg-card border border-accent/40 rounded-lg p-4">
+              <Card key={d.id} className="p-4 border-accent/40">
                 <div className="flex items-center justify-between">
                   <div className="font-semibold text-fg truncate">{d.name}</div>
                   <button onClick={() => useDatabasesStore.getState().remove(d.id)} title="Borrar"
                     className="text-dim hover:text-danger"><Icon name="trash" size={14} /></button>
                 </div>
                 <div className="text-dim text-xs mt-2">{d.games.toLocaleString()} partidas · úsala en Análisis → Database</div>
-              </div>
+              </Card>
             ))}
           </div>
         </>
@@ -56,32 +57,30 @@ export default function DatabasesTab() {
 
       {/* Importar PGN */}
       {!open ? (
-        <button onClick={() => { setOpen(true); setMsg(''); }}
-          className="bg-accent text-white px-4 py-2 rounded-md text-sm inline-flex items-center gap-1.5 hover:opacity-90 mb-6">
-          <Icon name="plus" size={15} /> Importar PGN como base
-        </button>
+        <Button variant="primary" icon="plus" className="mb-6" onClick={() => { setOpen(true); setMsg(''); }}>
+          Importar PGN como base
+        </Button>
       ) : (
-        <div className="bg-card border border-border rounded-lg p-4 mb-6 flex flex-col gap-2 max-w-2xl">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre de la base…"
-            className="bg-base border border-border text-fg rounded-md px-3 py-1.5 text-sm focus:border-accent outline-none" />
+        <Card className="p-4 mb-6 flex flex-col gap-2 max-w-2xl">
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre de la base…" />
           <textarea value={pgn} onChange={(e) => setPgn(e.target.value)} placeholder="Pega aquí el PGN (una o muchas partidas)…" rows={6}
-            className="bg-base border border-border text-fg rounded-md px-3 py-2 text-xs font-mono focus:border-accent outline-none resize-y" />
+            className="bg-base border border-border text-fg rounded-lg px-3 py-2 text-xs font-mono focus:border-accent outline-none resize-y" />
           <div className="flex items-center gap-3">
-            <button onClick={create} className="bg-accent text-white px-3 py-1.5 rounded-md text-sm hover:opacity-90">Crear base</button>
+            <Button variant="primary" onClick={create}>Crear base</Button>
             <button onClick={() => setOpen(false)} className="text-dim text-sm hover:text-fg">Cancelar</button>
             {msg && <span className="text-xs text-dim">{msg}</span>}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Fuentes online / Mega */}
       <h3 className="text-accent text-sm font-semibold mb-2">Fuentes</h3>
       <div className="grid grid-cols-3 gap-3">
         {ONLINE.map((d) => (
-          <div key={d.name} className="bg-card border border-border rounded-lg p-4">
+          <Card key={d.name} className="p-4">
             <div className="font-semibold text-fg">{d.name}</div>
             <p className="text-dim text-xs mt-2 leading-relaxed">{d.desc}</p>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

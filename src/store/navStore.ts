@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type Tab = 'analysis' | 'play' | 'study' | 'engines' | 'match' | 'databases' | 'files' | 'settings';
+export type Tab = 'home' | 'analysis' | 'play' | 'study' | 'engines' | 'match' | 'databases' | 'files' | 'settings';
 
 interface NavStore {
   tab:         Tab;
@@ -10,7 +10,7 @@ interface NavStore {
 }
 
 export const useNavStore = create<NavStore>((set) => ({
-  tab:         'analysis',
+  tab:         'home',
   playFromFen: null,
   setTab:         (tab) => set({ tab }),
   setPlayFromFen: (playFromFen) => set({ playFromFen }),

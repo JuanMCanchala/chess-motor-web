@@ -1,6 +1,7 @@
 'use client';
 
 import { useUiStore, BOARD_THEMES, BoardTheme, Theme } from '@/store/uiStore';
+import { Switch, Select as UiSelect } from './ui';
 
 function Toggle({ label, desc, v, set }: { label: string; desc?: string; v: boolean; set: (b: boolean) => void }) {
   return (
@@ -9,10 +10,7 @@ function Toggle({ label, desc, v, set }: { label: string; desc?: string; v: bool
         <div className="text-fg text-sm">{label}</div>
         {desc && <div className="text-dim text-xs">{desc}</div>}
       </div>
-      <button onClick={() => set(!v)}
-        className={`w-12 h-6 rounded-full relative transition-colors ${v ? 'bg-accent' : 'bg-hover'}`}>
-        <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${v ? 'left-6' : 'left-0.5'}`} />
-      </button>
+      <Switch checked={v} onChange={set} />
     </div>
   );
 }
@@ -26,10 +24,9 @@ function Select<T extends string>({ label, desc, value, set, options }: {
         <div className="text-fg text-sm">{label}</div>
         {desc && <div className="text-dim text-xs">{desc}</div>}
       </div>
-      <select value={value} onChange={(e) => set(e.target.value as T)}
-        className="bg-base border border-border text-fg rounded-md px-3 py-1.5 text-sm capitalize">
+      <UiSelect value={value} onChange={(e) => set(e.target.value as T)} className="capitalize">
         {options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
-      </select>
+      </UiSelect>
     </div>
   );
 }
