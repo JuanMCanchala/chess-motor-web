@@ -16,6 +16,8 @@ export interface EngineCfg {
 
 const DEFAULTS: EngineCfg[] = [
   { id: 'stockfish', name: 'Stockfish', kind: 'stockfish', version: '18', elo: 3635, threads: 1, hash: 256, builtin: true },
+  { id: 'lc0',       name: 'Leela (lc0)', kind: 'uci', version: 'v0.32.1', elo: 0, threads: 2, hash: 256, builtin: true },
+  { id: 'ethereal',  name: 'Ethereal', kind: 'uci', version: '11', elo: 0, threads: 1, hash: 256, builtin: true },
   { id: 'kallpa',    name: 'KallpaModulo (tesis)', kind: 'kallpa', version: 'C++ v8', elo: 0, threads: 1, hash: 16, builtin: true },
 ];
 

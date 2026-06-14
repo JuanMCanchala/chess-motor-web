@@ -22,3 +22,6 @@ build_err.txt
 # Tauri
 src-tauri/target/
 src-tauri/gen/
+
+# Binarios de motores (lc0, ethereal, redes) — se descargan/compilan, no se versionan
+engines/

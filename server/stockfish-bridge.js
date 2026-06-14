@@ -33,6 +33,8 @@ const { Chess }   = require('chess.js');
 class StockfishBridge {
   constructor(enginePath, opts = {}) {
     this._path    = enginePath;
+    this._args    = opts.args || [];              // args de línea de comandos (p.ej. lc0 --weights)
+    this._uciOpts = opts.options || {};           // setoption tras 'uci' (p.ej. EvalMode)
     this._threads = opts.threads || Math.max(1, (os.cpus().length || 2) - 1);
     this._hash    = opts.hash    || 256;          // MB de tabla de transposición
     this._multipv = opts.multipv || 3;            // líneas por defecto en análisis
@@ -57,19 +59,26 @@ class StockfishBridge {
 
   start() {
     if (!fs.existsSync(this._path)) {
-      throw new Error(`Stockfish no encontrado en "${this._path}"`);
+      throw new Error(`Motor no encontrado en "${this._path}"`);
     }
 
-    this._proc = spawn(this._path, [], { stdio: ['pipe', 'pipe', 'pipe'] });
+    // Algunos motores (lc0) necesitan su directorio como cwd para hallar DLLs/red
+    this._proc = spawn(this._path, this._args, {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      cwd: require('path').dirname(this._path),
+    });
     this._rl   = readline.createInterface({ input: this._proc.stdout });
     this._rl.on('line', (line) => this._onEngineLine(line.trim()));
 
-    this._proc.on('error', (err) => console.error('[stockfish] error:', err.message));
-    this._proc.on('exit',  (code, sig) => console.log(`[stockfish] exit code=${code} signal=${sig}`));
+    this._proc.on('error', (err) => console.error('[engine] error:', err.message));
+    this._proc.on('exit',  (code, sig) => console.log(`[engine] exit code=${code} signal=${sig}`));
     this._proc.stderr.on('data', () => { /* ignorar */ });
 
-    // Inicialización UCI (Stockfish procesa la entrada en orden, no hace falta await)
+    // Inicialización UCI (el motor procesa la entrada en orden, no hace falta await)
     this._uci('uci');
+    // setoption específicos del motor (p.ej. EvalMode=ML)
+    for (const [k, v] of Object.entries(this._uciOpts)) this._uci(`setoption name ${k} value ${v}`);
+    // Threads/Hash solo si el motor probablemente los soporta (lc0 usa otras opciones; ignora silenciosamente)
     this._uci(`setoption name Threads value ${this._threads}`);
     this._uci(`setoption name Hash value ${this._hash}`);
     this._uci('ucinewgame');

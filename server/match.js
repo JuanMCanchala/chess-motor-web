@@ -4,38 +4,26 @@
 // transmite el progreso (resultado por partida + marcador) por callback.
 const { spawn } = require('child_process');
 const fs        = require('fs');
-const path      = require('path');
+const engines   = require('./engines');
 
 const CUTECHESS = process.env.CUTECHESS_PATH
   || 'C:\\cutechess-1.4.0-win64\\cutechess-1.4.0-win64\\cutechess-cli.exe';
 
 const TESIS = 'C:\\Programacion\\chess-motor-tabular';
-
-// Módulos predefinidos (los que usa run_ab.ps1 de la tesis + Stockfish)
-const MODULES = {
-  stockfish: {
-    name: 'Stockfish',
-    cmd: process.env.STOCKFISH_PATH
-      || 'C:\\stockfish-windows-x86-64-avx2\\stockfish\\tauri-appsrc-tauribinariesstockfish-x86_64-pc-windows-gnu.exe',
-    args: [], options: {},
-  },
-  hce: {
-    name: 'KallpaModulo HCE',
-    cmd: `${TESIS}\\engine_ml\\build\\engine_server.exe`,
-    args: ['--uci'], options: { EvalMode: 'HCE' },
-  },
-  ml: {
-    name: 'KallpaModulo ML',
-    cmd: `${TESIS}\\engine_ml\\build\\engine_server.exe`,
-    args: ['--uci'], options: { EvalMode: 'ML', ModelFile: `${TESIS}\\models\\xgb_B.json` },
-  },
-};
 const BOOK = `${TESIS}\\engine_ml\\tests\\books\\balanced_openings.epd`;
 
+// Los módulos del match = motores UCI del registro central (cutechess solo habla UCI,
+// así que se excluye KallpaModulo en su modo JSON propio; sus variantes UCI hce/ml sí entran).
+function MODULE(id) {
+  const e = engines.get(id);
+  if (!e || e.kind !== 'uci') return null;
+  return { name: e.name, cmd: e.cmd, args: e.args, options: e.options };
+}
+
 function listModules() {
-  return Object.entries(MODULES).map(([id, m]) => ({
-    id, name: m.name, available: fs.existsSync(m.cmd),
-  }));
+  return engines.list()
+    .filter((e) => e.kind === 'uci')
+    .map((e) => ({ id: e.id, name: e.name, available: e.available }));
 }
 
 function engineArgs(label, mod) {
@@ -51,7 +39,7 @@ function engineArgs(label, mod) {
  * Devuelve un handle con kill().
  */
 function runMatch(opts, onEvent) {
-  const A = MODULES[opts.a], B = MODULES[opts.b];
+  const A = MODULE(opts.a), B = MODULE(opts.b);
   if (!A || !B) { onEvent({ type: 'error', message: 'Módulo desconocido' }); return { kill() {} }; }
   if (!fs.existsSync(CUTECHESS)) { onEvent({ type: 'error', message: 'cutechess-cli no encontrado' }); return { kill() {} }; }
   if (!fs.existsSync(A.cmd) || !fs.existsSync(B.cmd)) { onEvent({ type: 'error', message: 'Binario de motor no encontrado' }); return { kill() {} }; }

@@ -34,7 +34,7 @@ export default function EnginesTab() {
   async function activate(e: EngineCfg) {
     setBusy(true);
     const r = await wsCmd<{ ok: boolean; error?: string }>('set_engine',
-      { kind: e.kind, path: e.path, threads: e.threads, hash: e.hash });
+      { id: e.id, kind: e.kind, path: e.path, threads: e.threads, hash: e.hash });
     setBusy(false);
     if (r && r.ok === false) { alert('No se pudo iniciar el motor: ' + (r.error || '')); return; }
     setActive(e.id);
@@ -118,10 +118,13 @@ export default function EnginesTab() {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4">
-                  {sel.kind === 'uci' && (
+                  {sel.kind === 'uci' && !sel.builtin && (
                     <label className="col-span-2 flex flex-col gap-1 text-xs text-dim">Ruta (.exe)
                       <input value={sel.path ?? ''} onChange={(e) => update(sel.id, { path: e.target.value })}
                         className="bg-base border border-border text-fg rounded-md px-2 py-1.5 text-sm font-mono" /></label>
+                  )}
+                  {sel.id === 'lc0' && (
+                    <p className="col-span-2 text-xs text-dim">Leela usa tu <b className="text-fg">RTX 4060</b> (DirectML) con la red T60 incluida.</p>
                   )}
                   <NumberField label="Hilos (Threads)" value={sel.threads} set={(n) => update(sel.id, { threads: n })} min={1} max={32} />
                   <NumberField label="Hash (MB)" value={sel.hash} set={(n) => update(sel.id, { hash: n })} min={16} max={8192} />

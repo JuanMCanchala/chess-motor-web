@@ -11,6 +11,7 @@ const EngineBridge     = require('./server/engine-bridge');
 const StockfishBridge  = require('./server/stockfish-bridge');
 const mega             = require('./server/mega');
 const match            = require('./server/match');
+const engines          = require('./server/engines');
 
 const dev  = process.env.NODE_ENV !== 'production';
 const port = Number(process.env.PORT) || 3000;
@@ -27,11 +28,21 @@ const KALLPA_PATH = process.env.ENGINE_PATH
   ? path.resolve(__dirname, process.env.ENGINE_PATH)
   : path.resolve(__dirname, '../chess-motor/Chess_motor/cpp_engine/build/engine_server.exe');
 
-function makeBridge(kind, opts = {}) {
-  if (kind === 'kallpa') return new EngineBridge(KALLPA_PATH);
-  // 'uci' = cualquier motor UCI externo (otros módulos): StockfishBridge es UCI genérico
-  const enginePath = (kind === 'uci' && opts.path) ? opts.path : STOCKFISH_PATH;
-  return new StockfishBridge(enginePath, {
+// Crea un bridge a partir de un id del registro (stockfish, lc0, ethereal, kallpa, …)
+// o de una ruta UCI suelta (motores añadidos por el usuario).
+function makeBridge(idOrOpts = {}) {
+  const opts = typeof idOrOpts === 'string' ? { id: idOrOpts } : idOrOpts;
+  const reg = opts.id ? engines.get(opts.id) : null;
+
+  if (reg && reg.kind === 'kallpa') return new EngineBridge(reg.cmd);
+  if (opts.kind === 'kallpa' && !reg) return new EngineBridge(KALLPA_PATH);
+
+  // UCI: por registro, o por ruta suelta (opts.path), o Stockfish por defecto
+  const cmd  = reg ? reg.cmd  : (opts.path || STOCKFISH_PATH);
+  const args = reg ? reg.args : (opts.args || []);
+  const uciOptions = reg ? reg.options : (opts.options || {});
+  return new StockfishBridge(cmd, {
+    args, options: uciOptions,
     threads: opts.threads || Number(process.env.STOCKFISH_THREADS) || undefined,
     hash:    opts.hash    || Number(process.env.STOCKFISH_HASH)    || undefined,
     multipv: opts.multipv || undefined,
@@ -127,7 +138,7 @@ app.prepare().then(() => {
   wss.on('connection', (ws, req) => {
     console.log('[ws] connect', req.socket.remoteAddress);
 
-    let bridge = makeBridge(ENGINE_KIND);
+    let bridge = makeBridge({ id: ENGINE_KIND });
     try {
       bridge.start();
       safeSend(ws, { event: 'ready' });
@@ -142,14 +153,13 @@ app.prepare().then(() => {
       try { msg = JSON.parse(raw.toString()); } catch { return; }
       const { cmd, payload = {} } = msg;
 
-      // Cambio de motor en caliente (Stockfish ↔ KallpaModulo)
+      // Cambio de motor en caliente (por id del registro o ruta UCI suelta)
       if (cmd === 'set_engine') {
         try { bridge.kill(); } catch { /* noop */ }
-        const kind = ['kallpa', 'uci'].includes(payload.kind) ? payload.kind : 'stockfish';
         try {
-          bridge = makeBridge(kind, payload);
+          bridge = makeBridge(payload);
           bridge.start();
-          safeSend(ws, { event: 'set_engine', result: { ok: true, kind } });
+          safeSend(ws, { event: 'set_engine', result: { ok: true, id: payload.id || payload.kind } });
         } catch (err) {
           safeSend(ws, { event: 'set_engine', result: { ok: false, error: err.message } });
         }

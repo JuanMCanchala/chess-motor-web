@@ -15,8 +15,8 @@ export default function WsProvider({ children }: { children: React.ReactNode }) 
     wsConnect();
     // Si el motor activo persistido no es el default (stockfish), aplícalo
     const eng = useEnginesStore.getState().active();
-    if (eng && eng.kind !== 'stockfish') {
-      wsCmd('set_engine', { kind: eng.kind, threads: eng.threads, hash: eng.hash });
+    if (eng && eng.id !== 'stockfish') {
+      wsCmd('set_engine', { id: eng.id, kind: eng.kind, path: eng.path, threads: eng.threads, hash: eng.hash });
     }
   }, []);
   return <>{children}</>;
