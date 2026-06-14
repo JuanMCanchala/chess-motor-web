@@ -8,7 +8,7 @@ import { useAnalysisStore }      from '@/store/analysisStore';
 import { useTreeStore }          from '@/store/treeStore';
 import { useEngineStore }        from '@/store/engineStore';
 import { useUiStore, boardColors } from '@/store/uiStore';
-import { useBoardsStore, emptySnapshot } from '@/store/boardsStore';
+import { useWorkspaceStore }     from '@/store/workspaceStore';
 import { useNavStore }           from '@/store/navStore';
 import { playMoveSound }         from '@/lib/sound';
 import { Icon, IconName }        from './Icon';
@@ -71,9 +71,6 @@ export default function AnalysisTab() {
   const coords  = useUiStore((s) => s.coords);
   const boardW  = useBoardSize();
 
-  const tabs          = useBoardsStore((s) => s.tabs);
-  const activeBoardId = useBoardsStore((s) => s.activeId);
-
   const [subtab, setSubtab]   = useState<SubTab>('analysis');
   const [autoAnalyze, setAuto] = useState(false);
   const [hideComments, setHideComments] = useState(false);
@@ -81,33 +78,6 @@ export default function AnalysisTab() {
   const [gameAnalyzing, setGameAnalyzing] = useState(false);
   const [gameProg, setGameProg] = useState({ i: 0, n: 0 });
   const boardRef = useRef<HTMLDivElement>(null);
-
-  // ── Pestañas de tablero (multi) ─────────────────────────────────────────────
-  useEffect(() => {
-    const b = useBoardsStore.getState();
-    if (b.tabs.length === 0) b.ensureOne(useTreeStore.getState().snapshot());
-    else { const a = b.active(); if (a) useTreeStore.getState().loadSnapshot(a.snap); }
-    return () => { useBoardsStore.getState().saveActive(useTreeStore.getState().snapshot()); };
-  }, []);
-
-  function switchBoard(id: string) {
-    const b = useBoardsStore.getState();
-    b.saveActive(useTreeStore.getState().snapshot());
-    b.select(id);
-    const t = b.active(); if (t) useTreeStore.getState().loadSnapshot(t.snap);
-  }
-  function newBoard() {
-    const b = useBoardsStore.getState();
-    b.saveActive(useTreeStore.getState().snapshot());
-    const snap = emptySnapshot();
-    b.add(snap);
-    useTreeStore.getState().loadSnapshot(snap);
-  }
-  function closeBoard(id: string, e: React.MouseEvent) {
-    e.stopPropagation();
-    const newActive = useBoardsStore.getState().close(id);
-    if (newActive) { const t = useBoardsStore.getState().active(); if (t) useTreeStore.getState().loadSnapshot(t.snap); }
-  }
 
   const startAnalysis = useCallback(() => {
     const a = useAnalysisStore.getState();
@@ -204,7 +174,9 @@ export default function AnalysisTab() {
   }
   function playFromHere() {
     useNavStore.getState().setPlayFromFen(fen);
-    useNavStore.getState().setTab('play');
+    const w = useWorkspaceStore.getState();
+    const id = w.newTab();
+    w.setType(id, 'play', 'Partida');
   }
 
   const lastMove: Record<string, React.CSSProperties> = {};
@@ -214,26 +186,7 @@ export default function AnalysisTab() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-96px)]">
-
-      {/* Barra de pestañas de tablero */}
-      <div className="flex items-center gap-1 mb-2">
-        {tabs.map((t) => (
-          <div key={t.id} onClick={() => switchBoard(t.id)}
-            className={`group flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-t-md text-sm cursor-pointer border-b-2
-              ${t.id === activeBoardId ? 'bg-card border-accent text-fg' : 'border-transparent text-dim hover:bg-hover'}`}>
-            {t.title}
-            {tabs.length > 1 && (
-              <button onClick={(e) => closeBoard(t.id, e)} className="opacity-50 hover:opacity-100">
-                <Icon name="x" size={12} />
-              </button>
-            )}
-          </div>
-        ))}
-        <button onClick={newBoard} title="Nuevo tablero"
-          className="text-dim hover:text-fg hover:bg-hover rounded p-1.5"><Icon name="plus" size={16} /></button>
-      </div>
-
+    <div className="flex flex-col h-full min-h-[600px]">
       <div className="flex items-start gap-5 flex-1 min-h-0">
 
         {/* Izquierda — Tablero */}

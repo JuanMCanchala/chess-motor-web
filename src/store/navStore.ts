@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 
-export type Tab = 'home' | 'analysis' | 'play' | 'study' | 'engines' | 'match' | 'databases' | 'files' | 'settings';
+// Secciones del sidebar. El área 'board' contiene las pestañas tipo navegador
+// (home/análisis/partida); el resto son páginas completas.
+export type Tab = 'board' | 'study' | 'engines' | 'match' | 'databases' | 'files' | 'settings';
 
 interface NavStore {
   tab:         Tab;
@@ -10,7 +12,7 @@ interface NavStore {
 }
 
 export const useNavStore = create<NavStore>((set) => ({
-  tab:         'home',
+  tab:         'board',
   playFromFen: null,
   setTab:         (tab) => set({ tab }),
   setPlayFromFen: (playFromFen) => set({ playFromFen }),

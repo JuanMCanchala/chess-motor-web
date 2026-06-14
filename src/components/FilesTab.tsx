@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useStudyStore } from '@/store/studyStore';
 import { useTreeStore } from '@/store/treeStore';
 import { useNavStore } from '@/store/navStore';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import { Icon } from './Icon';
 import { Button, Card } from './ui';
 
@@ -23,9 +24,16 @@ export default function FilesTab({ onOpenStudy }: { onOpenStudy: (id: string) =>
 
   function openPgn() {
     if (!pgn.trim()) return;
-    if (!useTreeStore.getState().loadPgn(pgn)) { alert('PGN inválido'); return; }
+    const t = useTreeStore.getState();
+    if (!t.loadPgn(pgn)) { alert('PGN inválido'); return; }
+    const snap = t.snapshot();
     setPgn(''); setImporting(false);
-    useNavStore.getState().setTab('analysis');
+    // Abre el PGN en una nueva pestaña de análisis del workspace
+    const w = useWorkspaceStore.getState();
+    const id = w.newTab();
+    w.setType(id, 'analysis', 'Análisis');
+    w.saveSnap(id, snap);
+    useNavStore.getState().setTab('board');
   }
 
   return (

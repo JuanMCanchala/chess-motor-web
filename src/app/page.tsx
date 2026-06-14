@@ -1,8 +1,6 @@
 'use client';
 
-import HomeTab        from '@/components/HomeTab';
-import PlayTab        from '@/components/PlayTab';
-import AnalysisTab    from '@/components/AnalysisTab';
+import BoardWorkspace from '@/components/BoardWorkspace';
 import StudyTab       from '@/components/StudyTab';
 import SettingsTab    from '@/components/SettingsTab';
 import EnginesTab     from '@/components/EnginesTab';
@@ -17,9 +15,7 @@ import { useNavStore, Tab } from '@/store/navStore';
 import { Icon, IconName } from '@/components/Icon';
 
 const NAV: { tab: Tab; icon: IconName; label: string }[] = [
-  { tab: 'home',      icon: 'home',     label: 'Inicio' },
-  { tab: 'analysis',  icon: 'grid',     label: 'Análisis' },
-  { tab: 'play',      icon: 'play',     label: 'Jugar' },
+  { tab: 'board',     icon: 'grid',     label: 'Tablero' },
   { tab: 'study',     icon: 'book',     label: 'Estudio' },
   { tab: 'engines',   icon: 'cpu',      label: 'Engines' },
   { tab: 'match',     icon: 'target',   label: 'Match' },
@@ -42,16 +38,14 @@ export default function Home() {
         <TopBar />
         <div className="flex flex-1 min-h-0">
           <Sidebar tab={tab} onTab={setTab} />
-          <main className="flex-1 overflow-auto px-4 py-3">
-            {tab === 'home'      && <HomeTab />}
-            {tab === 'analysis'  && <AnalysisTab />}
-            {tab === 'play'      && <PlayTab />}
-            {tab === 'study'     && <StudyTab />}
-            {tab === 'engines'   && <EnginesTab />}
-            {tab === 'match'     && <MatchTab />}
-            {tab === 'databases' && <DatabasesTab />}
-            {tab === 'files'     && <FilesTab onOpenStudy={openStudy} />}
-            {tab === 'settings'  && <SettingsTab />}
+          <main className="flex-1 min-w-0 overflow-hidden">
+            {tab === 'board'     && <BoardWorkspace />}
+            {tab === 'study'     && <div className="h-full overflow-auto px-4 py-3"><StudyTab /></div>}
+            {tab === 'engines'   && <div className="h-full overflow-auto px-4 py-3"><EnginesTab /></div>}
+            {tab === 'match'     && <div className="h-full overflow-auto px-4 py-3"><MatchTab /></div>}
+            {tab === 'databases' && <div className="h-full overflow-auto px-4 py-3"><DatabasesTab /></div>}
+            {tab === 'files'     && <div className="h-full overflow-auto px-4 py-3"><FilesTab onOpenStudy={openStudy} /></div>}
+            {tab === 'settings'  && <div className="h-full overflow-auto px-4 py-3"><SettingsTab /></div>}
           </main>
         </div>
       </div>

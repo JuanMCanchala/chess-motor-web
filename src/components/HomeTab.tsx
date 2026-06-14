@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useNavStore } from '@/store/navStore';
 import { useStudyStore } from '@/store/studyStore';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import { Icon, IconName } from './Icon';
 import { Button, Card } from './ui';
 
@@ -18,11 +19,17 @@ export default function HomeTab() {
     if (useStudyStore.getState().studies.length === 0) useStudyStore.getState().load();
   }, []);
 
+  // Convierte la pestaña actual del workspace en el tipo elegido
+  function become(type: 'analysis' | 'play', title: string) {
+    const w = useWorkspaceStore.getState();
+    if (w.activeId) w.setType(w.activeId, type, title);
+  }
+
   const actions: Action[] = [
     { icon: 'play', title: 'Jugar', desc: 'Juega contra un motor o un amigo', cta: 'Jugar',
-      onClick: () => useNavStore.getState().setTab('play') },
+      onClick: () => become('play', 'Partida') },
     { icon: 'grid', title: 'Tablero de análisis', desc: 'Analiza una partida o posición', cta: 'Abrir',
-      onClick: () => useNavStore.getState().setTab('analysis') },
+      onClick: () => become('analysis', 'Análisis') },
     { icon: 'target', title: 'Nuevo repertorio', desc: 'Construye y practica tus aperturas', cta: 'Crear',
       onClick: () => { const n = prompt('Nombre del repertorio:'); if (n) { useStudyStore.getState().addStudy(n); useNavStore.getState().setTab('study'); } } },
     { icon: 'download', title: 'Importar partida', desc: 'Importa una partida desde un PGN', cta: 'Importar',
