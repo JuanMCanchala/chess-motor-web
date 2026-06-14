@@ -1,10 +1,23 @@
 'use client';
 
 import { useEffect } from 'react';
-import { wsConnect }  from '@/lib/ws';
+import { wsConnect, wsCmd }  from '@/lib/ws';
+import { useUiStore } from '@/store/uiStore';
+import { useEnginesStore } from '@/store/enginesStore';
+import { useDatabasesStore } from '@/store/databasesStore';
 
-/** Monta la conexión WebSocket una vez al arrancar la app. */
+/** Monta la conexión WebSocket y carga las preferencias guardadas al arrancar. */
 export default function WsProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => { wsConnect(); }, []);
+  useEffect(() => {
+    useUiStore.getState().hydrate();
+    useEnginesStore.getState().load();
+    useDatabasesStore.getState().load();
+    wsConnect();
+    // Si el motor activo persistido no es el default (stockfish), aplícalo
+    const eng = useEnginesStore.getState().active();
+    if (eng && eng.kind !== 'stockfish') {
+      wsCmd('set_engine', { kind: eng.kind, threads: eng.threads, hash: eng.hash });
+    }
+  }, []);
   return <>{children}</>;
 }

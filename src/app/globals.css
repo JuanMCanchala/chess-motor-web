@@ -2,15 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --board-size: 480px;
+/* ── Temas (estilo Lichess) — valores RGB para soportar opacidad ────────────── */
+:root, [data-theme="dark"] {
+  --c-bg:        22 21 18;     /* #161512 */
+  --c-surface:   38 36 33;     /* #262421 */
+  --c-surface2:  56 53 49;     /* hover    */
+  --c-border:    64 61 56;
+  --c-fg:        222 222 222;  /* #dedede */
+  --c-dim:       150 150 150;  /* #969696 */
+  --c-accent:    54 146 231;   /* #3692e7 azul lichess */
+  --c-danger:    214 78 78;
 }
 
-/* Chessground-compatible scroll */
-::-webkit-scrollbar       { width: 5px; }
-::-webkit-scrollbar-track { background: #0f172a; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+[data-theme="light"] {
+  --c-bg:        247 246 245;  /* #f7f6f5 */
+  --c-surface:   255 255 255;
+  --c-surface2:  234 232 230;
+  --c-border:    214 211 207;
+  --c-fg:        45 45 45;      /* #2d2d2d */
+  --c-dim:       110 110 110;
+  --c-accent:    34 124 207;    /* azul algo más oscuro para contraste sobre claro */
+  --c-danger:    197 57 57;
+}
 
-/* react-chessboard arrow colors */
+:root { --board-size: 480px; }
+
+body { background: rgb(var(--c-bg)); color: rgb(var(--c-fg)); }
+
+::-webkit-scrollbar       { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgb(var(--c-surface2)); border-radius: 4px; }
+
 .arrow-green    { stroke: #22c55e; }
 .arrow-paleblue { stroke: #93c5fd; }

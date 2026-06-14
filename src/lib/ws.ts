@@ -11,10 +11,17 @@ let _onAnalyzeDone:   ((msg: unknown) => void) | null = null;
 let _statusListeners: Set<(s: string) => void> = new Set();
 let _messageListeners: Set<(msg: unknown) => void> = new Set();
 let _status = 'disconnected';
+let _queue: string[] = [];
 
 function setStatus(s: string) {
   _status = s;
   _statusListeners.forEach((fn) => fn(s));
+}
+
+/** Envía solo si el socket está OPEN; si no, encola hasta que abra. */
+function send(data: string) {
+  if (_ws && _ws.readyState === WebSocket.OPEN) _ws.send(data);
+  else _queue.push(data);
 }
 
 export function wsConnect() {
@@ -23,7 +30,11 @@ export function wsConnect() {
 
   _ws = new WebSocket(`ws://${window.location.host}/ws`);
 
-  _ws.onopen = () => setStatus('connected');
+  _ws.onopen = () => {
+    setStatus('connected');
+    const pend = _queue; _queue = [];
+    pend.forEach((d) => { try { _ws?.send(d); } catch { /* noop */ } });
+  };
 
   _ws.onclose = () => {
     setStatus('disconnected');
@@ -57,7 +68,7 @@ export function wsConnect() {
 export function wsCmd<T = unknown>(cmd: string, payload: object = {}): Promise<T> {
   return new Promise((resolve) => {
     _pendingResolve = resolve as (r: unknown) => void;
-    _ws?.send(JSON.stringify({ cmd, payload }));
+    send(JSON.stringify({ cmd, payload }));
   });
 }
 
@@ -69,13 +80,16 @@ export function wsAnalyze(
 ) {
   _onAnalyzeInfo = onInfo;
   _onAnalyzeDone = onDone;
-  _ws?.send(JSON.stringify({ cmd: 'analyze', payload }));
+  send(JSON.stringify({ cmd: 'analyze', payload }));
 }
 
 /** Detiene el análisis. */
 export function wsStopAnalysis() {
   _onAnalyzeInfo = _onAnalyzeDone = null;
-  _ws?.send(JSON.stringify({ cmd: 'stop_analysis', payload: {} }));
+  // Solo enviar si hay conexión activa (en CONNECTING no hay nada que parar)
+  if (_ws && _ws.readyState === WebSocket.OPEN) {
+    _ws.send(JSON.stringify({ cmd: 'stop_analysis', payload: {} }));
+  }
 }
 
 // ─── React hooks ──────────────────────────────────────────────────────────────

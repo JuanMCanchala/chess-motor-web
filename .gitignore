@@ -3,3 +3,22 @@ node_modules/
 .env
 *.log
 out/
+
+# Artefactos de herramientas / datos generados (Mega DB, ECO source)
+tools/cbh2pgn/
+tools/eco_src/
+tools/*.bin
+tools/*.bin.part*
+tools/*.sqlite
+tools/__pycache__/
+tools/mega_build.*
+/data/
+_dev.*
+_boot.*
+*.err
+*.pid
+build_err.txt
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/

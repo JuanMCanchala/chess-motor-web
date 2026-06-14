@@ -1,10 +1,13 @@
 'use client';
 
-import { useState, useCallback }       from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Chessboard }                  from 'react-chessboard';
 import { Square }                      from 'react-chessboard/dist/chessboard/types';
 import { wsCmd }                       from '@/lib/ws';
 import { useGameStore }                from '@/store/gameStore';
+import { useNavStore }                 from '@/store/navStore';
+import { useUiStore, boardColors }     from '@/store/uiStore';
+import { Icon }                        from './Icon';
 import EvalBar                         from './EvalBar';
 import MoveHistory                     from './MoveHistory';
 
@@ -38,6 +41,8 @@ interface UndoResult {
 export default function PlayTab() {
   const store = useGameStore();
 
+  const bc = boardColors(useUiStore((s) => s.boardTheme));
+
   // Movimientos legales: { e2: ['e3','e4'], ... }
   const [dests, setDests] = useState<Record<string, string[]>>({});
   // Resaltado de casillas con puntos
@@ -49,6 +54,25 @@ export default function PlayTab() {
     const r = await wsCmd<LegalMovesResult>('get_all_legal_moves');
     if (r.ok) setDests(r.dests);
   }
+
+  // "Jugar desde aquí" — arranca una partida desde una FEN traída del Análisis
+  useEffect(() => {
+    const f = useNavStore.getState().playFromFen;
+    if (!f) return;
+    useNavStore.getState().setPlayFromFen(null);
+    void (async () => {
+      const color: 'white' | 'black' = f.split(' ')[1] === 'b' ? 'black' : 'white';
+      store.reset();
+      store.setPlayerColor(color);
+      store.setTimeLimit(3);
+      const r = await wsCmd<{ ok: boolean; fen: string }>('new_game', { player_color: color, time_limit: 3, fen: f });
+      if (!r.ok) { alert('No se pudo iniciar desde esa posición'); return; }
+      store.setFen(r.fen);
+      store.setGameActive(true);
+      await fetchDests();
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function engineMove() {
     store.setEngineThinking(true);
@@ -72,6 +96,7 @@ export default function PlayTab() {
   async function startGame() {
     const colorSel = (document.getElementById('sel-color') as HTMLSelectElement).value;
     const timeSel  = Number((document.getElementById('sel-time') as HTMLSelectElement).value);
+    const eloSel   = Number((document.getElementById('sel-elo') as HTMLSelectElement).value);
 
     const color: 'white' | 'black' =
       colorSel === 'random' ? (Math.random() < 0.5 ? 'white' : 'black') : colorSel as 'white' | 'black';
@@ -83,6 +108,7 @@ export default function PlayTab() {
     const r = await wsCmd<{ ok: boolean; fen: string }>('new_game', {
       player_color: color,
       time_limit:   timeSel,
+      elo:          eloSel,
     });
     if (!r.ok) { alert('Error al iniciar la partida'); return; }
 
@@ -187,8 +213,8 @@ export default function PlayTab() {
           onPieceDrop={onDrop}
           onSquareClick={onSquareClick}
           customSquareStyles={customSquareStyles}
-          customDarkSquareStyle={{ backgroundColor: '#769656' }}
-          customLightSquareStyle={{ backgroundColor: '#eeeed2' }}
+          customDarkSquareStyle={{ backgroundColor: bc.dark }}
+          customLightSquareStyle={{ backgroundColor: bc.light }}
           animationDuration={200}
           arePiecesDraggable={store.gameActive && !store.engineThinking}
         />
@@ -204,7 +230,7 @@ export default function PlayTab() {
 
             <label className="flex flex-col gap-1 text-dim text-xs">
               Color
-              <select id="sel-color" className="bg-base border border-border text-slate-100
+              <select id="sel-color" className="bg-base border border-border text-fg
                                                 rounded-md px-2 py-1.5 text-sm">
                 <option value="white">Blancas</option>
                 <option value="black">Negras</option>
@@ -214,7 +240,7 @@ export default function PlayTab() {
 
             <label className="flex flex-col gap-1 text-dim text-xs">
               Tiempo del motor
-              <select id="sel-time" className="bg-base border border-border text-slate-100
+              <select id="sel-time" className="bg-base border border-border text-fg
                                                rounded-md px-2 py-1.5 text-sm">
                 <option value="0.5">0.5 s (fácil)</option>
                 <option value="1">1 s</option>
@@ -224,10 +250,23 @@ export default function PlayTab() {
               </select>
             </label>
 
+            <label className="flex flex-col gap-1 text-dim text-xs">
+              Fuerza (sparring)
+              <select id="sel-elo" defaultValue="0" className="bg-base border border-border text-fg
+                                              rounded-md px-2 py-1.5 text-sm">
+                <option value="0">Máxima</option>
+                <option value="1320">≈1320</option>
+                <option value="1600">≈1600</option>
+                <option value="2000">≈2000</option>
+                <option value="2400">≈2400</option>
+                <option value="2800">≈2800</option>
+              </select>
+            </label>
+
             <button onClick={startGame}
-                    className="w-full bg-accent text-base font-semibold py-2 rounded-md
-                               hover:opacity-90 transition-opacity">
-              ▶ Iniciar
+                    className="w-full bg-accent text-white font-semibold py-2 rounded-md
+                               hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-1.5">
+              <Icon name="play" size={15} /> Iniciar
             </button>
           </div>
         )}
@@ -256,23 +295,25 @@ export default function PlayTab() {
 
             <div className="flex gap-2">
               <button onClick={undoMove} disabled={store.engineThinking || !store.gameActive}
-                      className="flex-1 bg-hover text-slate-100 py-1.5 rounded-md text-sm
-                                 hover:opacity-80 disabled:opacity-40 transition-opacity">
-                ↩ Deshacer
+                      className="flex-1 bg-hover text-fg py-1.5 rounded-md text-sm
+                                 hover:opacity-80 disabled:opacity-40 transition-opacity
+                                 inline-flex items-center justify-center gap-1.5">
+                <Icon name="undo" size={14} /> Deshacer
               </button>
               <button
                 onClick={() => { store.setGameActive(false); store.setGameResult('resigned'); }}
                 disabled={!store.gameActive}
                 className="flex-1 bg-danger text-white py-1.5 rounded-md text-sm
-                           hover:opacity-80 disabled:opacity-40 transition-opacity">
-                ✕ Rendirse
+                           hover:opacity-80 disabled:opacity-40 transition-opacity
+                           inline-flex items-center justify-center gap-1.5">
+                <Icon name="x" size={14} /> Rendirse
               </button>
             </div>
 
             <button onClick={() => { store.reset(); setDests({}); setSelectedSq(null); }}
-                    className="w-full bg-hover text-slate-100 py-1.5 rounded-md text-sm
-                               hover:opacity-80 transition-opacity">
-              + Nueva partida
+                    className="w-full bg-hover text-fg py-1.5 rounded-md text-sm
+                               hover:opacity-80 transition-opacity inline-flex items-center justify-center gap-1.5">
+              <Icon name="plus" size={14} /> Nueva partida
             </button>
           </div>
         )}
