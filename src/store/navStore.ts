@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type Tab = 'analysis' | 'play' | 'study' | 'engines' | 'databases' | 'files' | 'settings';
+export type Tab = 'analysis' | 'play' | 'study' | 'engines' | 'match' | 'databases' | 'files' | 'settings';
 
 interface NavStore {
   tab:         Tab;

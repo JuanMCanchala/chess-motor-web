@@ -10,6 +10,7 @@ const path             = require('path');
 const EngineBridge     = require('./server/engine-bridge');
 const StockfishBridge  = require('./server/stockfish-bridge');
 const mega             = require('./server/mega');
+const match            = require('./server/match');
 
 const dev  = process.env.NODE_ENV !== 'production';
 const port = Number(process.env.PORT) || 3000;
@@ -45,6 +46,32 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   const server = createServer(async (req, res) => {
     const parsed = parse(req.url, true);
+
+    // Módulos disponibles para el Match
+    if (parsed.pathname === '/api/match/modules') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ modules: match.listModules() }));
+      return;
+    }
+
+    // Match en vivo vía Server-Sent Events
+    if (parsed.pathname === '/api/match/run') {
+      res.writeHead(200, {
+        'content-type': 'text/event-stream',
+        'cache-control': 'no-cache',
+        connection: 'keep-alive',
+      });
+      const send = (obj) => { try { res.write(`data: ${JSON.stringify(obj)}\n\n`); } catch { /* noop */ } };
+      const handle = match.runMatch({
+        a: parsed.query.a, b: parsed.query.b,
+        games: parsed.query.games, st: parsed.query.st, concurrency: parsed.query.concurrency,
+      }, (ev) => {
+        send(ev);
+        if (ev.type === 'done' || ev.type === 'error') { try { res.end(); } catch { /* noop */ } }
+      });
+      req.on('close', () => handle.kill());
+      return;
+    }
 
     // Estado de la Mega (¿libro disponible?)
     if (parsed.pathname === '/api/mega-status') {

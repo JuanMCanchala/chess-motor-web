@@ -5,6 +5,7 @@ import AnalysisTab    from '@/components/AnalysisTab';
 import StudyTab       from '@/components/StudyTab';
 import SettingsTab    from '@/components/SettingsTab';
 import EnginesTab     from '@/components/EnginesTab';
+import MatchTab       from '@/components/MatchTab';
 import DatabasesTab   from '@/components/DatabasesTab';
 import FilesTab       from '@/components/FilesTab';
 import WsProvider     from '@/components/WsProvider';
@@ -19,6 +20,7 @@ const NAV: { tab: Tab; icon: IconName; label: string }[] = [
   { tab: 'play',      icon: 'play',     label: 'Jugar' },
   { tab: 'study',     icon: 'book',     label: 'Estudio' },
   { tab: 'engines',   icon: 'cpu',      label: 'Engines' },
+  { tab: 'match',     icon: 'target',   label: 'Match' },
   { tab: 'databases', icon: 'database', label: 'Databases' },
   { tab: 'files',     icon: 'folder',   label: 'Files' },
 ];
@@ -43,6 +45,7 @@ export default function Home() {
             {tab === 'play'      && <PlayTab />}
             {tab === 'study'     && <StudyTab />}
             {tab === 'engines'   && <EnginesTab />}
+            {tab === 'match'     && <MatchTab />}
             {tab === 'databases' && <DatabasesTab />}
             {tab === 'files'     && <FilesTab onOpenStudy={openStudy} />}
             {tab === 'settings'  && <SettingsTab />}
