@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Chessboard }            from 'react-chessboard';
 import { Square }                from 'react-chessboard/dist/chessboard/types';
+import { Chess }                 from 'chess.js';
 import { wsAnalyze, wsStopAnalysis, wsCmd } from '@/lib/ws';
 import { useAnalysisStore }      from '@/store/analysisStore';
 import { useEngineStore }        from '@/store/engineStore';
@@ -113,8 +114,22 @@ export default function StudyTab() {
   const onDrop = useCallback((from: Square, to: Square, piece: string): boolean => {
     let uci = from + to;
     if (piece[1]?.toLowerCase() === 'p' && (to[1] === '8' || to[1] === '1')) uci += 'q';
+    setSelectedSq(null);
     return playUci(uci);
   }, [playUci]);
+
+  // Clic para mover (alternativa fiable al arrastre)
+  const [selectedSq, setSelectedSq] = useState<Square | null>(null);
+  const onSquareClick = useCallback((sq: Square) => {
+    const f = useTreeStore.getState().nodes[useTreeStore.getState().currentId].fen;
+    const c = new Chess(f);
+    if (selectedSq) {
+      const m = c.moves({ square: selectedSq, verbose: true }).find((x) => x.to === sq);
+      if (m) { playUci(m.from + m.to + (m.promotion || '')); setSelectedSq(null); return; }
+    }
+    const piece = c.get(sq);
+    setSelectedSq(piece && piece.color === c.turn() ? sq : null);
+  }, [selectedSq, playUci]);
 
   // ── Motor ──────────────────────────────────────────────────────────────────
   const startAnalysis = useCallback(() => {
@@ -172,6 +187,15 @@ export default function StudyTab() {
     lastMove[currentUci.slice(0, 2)] = { background: 'rgba(255,213,79,0.35)' };
     lastMove[currentUci.slice(2, 4)] = { background: 'rgba(255,213,79,0.45)' };
   }
+  if (selectedSq) {
+    lastMove[selectedSq] = { background: 'rgba(34,197,94,0.35)' };
+    try {
+      const c = new Chess(fen);
+      for (const m of c.moves({ square: selectedSq, verbose: true })) {
+        lastMove[m.to] = { background: 'radial-gradient(circle, rgba(34,197,94,0.55) 25%, transparent 26%)', borderRadius: '50%' };
+      }
+    } catch { /* noop */ }
+  }
 
   return (
     <div className="flex items-start gap-4 max-w-[1500px] mx-auto">
@@ -221,7 +245,7 @@ export default function StudyTab() {
       {/* Col 2 — Tablero */}
       <div className="shrink-0 flex flex-col gap-2">
         <Chessboard id="study-board" position={fen} boardWidth={440} boardOrientation={orientation}
-          onPieceDrop={onDrop} customSquareStyles={lastMove}
+          onPieceDrop={onDrop} onSquareClick={onSquareClick} arePiecesDraggable customSquareStyles={lastMove}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           customArrows={pvArrows as any}
           customDarkSquareStyle={{ backgroundColor: bc.dark }}
