@@ -10,6 +10,7 @@ import { useTreeStore }          from '@/store/treeStore';
 import { useStudyStore }         from '@/store/studyStore';
 import { useUiStore, boardColors } from '@/store/uiStore';
 import { Icon }                  from './Icon';
+import { Button, IconButton, Select } from './ui';
 import MoveTree                  from './MoveTree';
 import EvalGraph                 from './EvalGraph';
 import EngineSettings            from './EngineSettings';
@@ -178,13 +179,12 @@ export default function StudyTab() {
       {/* Col 1 — Capítulos */}
       <aside className="w-56 shrink-0 flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <select value={studyId ?? ''} onChange={(e) => useStudyStore.getState().selectStudy(e.target.value)}
-            className="flex-1 min-w-0 bg-base border border-border text-fg rounded-md px-2 py-1.5 text-sm">
+          <Select value={studyId ?? ''} onChange={(e) => useStudyStore.getState().selectStudy(e.target.value)}
+            className="flex-1 min-w-0">
             {studies.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-          <button title="Nuevo estudio"
-            onClick={() => { const n = prompt('Nombre del estudio:'); if (n) useStudyStore.getState().addStudy(n); }}
-            className="bg-hover text-fg rounded-md p-1.5"><Icon name="plus" size={14} /></button>
+          </Select>
+          <IconButton icon="plus" title="Nuevo estudio"
+            onClick={() => { const n = prompt('Nombre del estudio:'); if (n) useStudyStore.getState().addStudy(n); }} />
         </div>
 
         <div className="bg-card border border-border rounded-lg overflow-hidden flex flex-col">
@@ -226,12 +226,12 @@ export default function StudyTab() {
           customArrows={pvArrows as any}
           customDarkSquareStyle={{ backgroundColor: bc.dark }}
           customLightSquareStyle={{ backgroundColor: bc.light }} animationDuration={150} />
-        <div className="flex items-center gap-1">
-          <NavBtn onClick={goFirst} title="Inicio"><Icon name="skip-back" /></NavBtn>
-          <NavBtn onClick={goPrev}  title="Anterior (←)"><Icon name="chevron-left" /></NavBtn>
-          <NavBtn onClick={goNext}  title="Siguiente (→)"><Icon name="chevron-right" /></NavBtn>
-          <NavBtn onClick={goLast}  title="Final"><Icon name="skip-forward" /></NavBtn>
-          <NavBtn onClick={flip}    title="Voltear"><Icon name="rotate" /></NavBtn>
+        <div className="flex items-center gap-0.5 bg-card border border-border rounded-xl px-1.5 py-1">
+          <IconButton icon="skip-back"     title="Inicio" onClick={goFirst} />
+          <IconButton icon="chevron-left"  title="Anterior (←)" onClick={goPrev} />
+          <IconButton icon="chevron-right" title="Siguiente (→)" onClick={goNext} />
+          <IconButton icon="skip-forward"  title="Final" onClick={goLast} />
+          <IconButton icon="rotate"        title="Voltear" onClick={flip} />
         </div>
         <EvalGraph />
       </div>
@@ -255,27 +255,18 @@ export default function StudyTab() {
           onChange={(e) => useTreeStore.getState().setComment(currentId, e.target.value)}
           placeholder="Comentario de la jugada…"
           rows={2}
-          className="bg-base border border-border text-fg rounded-md px-3 py-2 text-sm
+          className="bg-base border border-border text-fg rounded-lg px-3 py-2 text-sm
                      focus:border-accent outline-none resize-y" />
 
         {/* Motor */}
         <div className="flex items-center gap-2 flex-wrap">
-          {!analyzing ? (
-            <button onClick={startAnalysis}
-              className="bg-accent text-white font-semibold px-4 py-1.5 rounded-md hover:opacity-90 text-sm inline-flex items-center gap-1.5">
-              <Icon name="play" size={14} /> Analizar
-            </button>
-          ) : (
-            <button onClick={stopAnalysis}
-              className="bg-danger text-white font-semibold px-4 py-1.5 rounded-md hover:opacity-90 text-sm inline-flex items-center gap-1.5">
-              <Icon name="stop" size={14} /> Parar
-            </button>
-          )}
-          <button onClick={analyzeGame} disabled={analyzing || gameAnalyzing}
-            className="bg-hover text-fg px-3 py-1.5 rounded-md text-xs hover:opacity-80 disabled:opacity-40 inline-flex items-center gap-1.5">
-            <Icon name="flag" size={13} />
-            {gameAnalyzing ? `Analizando… ${gameProg.i}/${gameProg.n}` : 'Computer analysis'}
-          </button>
+          {!analyzing
+            ? <Button variant="primary" icon="play" onClick={startAnalysis}>Analizar</Button>
+            : <Button variant="danger" icon="stop" onClick={stopAnalysis}>Parar</Button>}
+          <Button variant="subtle" icon="flag" onClick={analyzeGame} disabled={analyzing || gameAnalyzing}
+            className="!px-3 !py-1.5 text-xs">
+            {gameAnalyzing ? `Analizando ${gameProg.i}/${gameProg.n}` : 'Computer analysis'}
+          </Button>
         </div>
         <EngineSettings />
 
@@ -298,14 +289,5 @@ export default function StudyTab() {
         </div>
       </aside>
     </div>
-  );
-}
-
-function NavBtn({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) {
-  return (
-    <button onClick={onClick} title={title}
-      className="bg-hover text-fg px-2.5 py-1.5 rounded-md text-sm hover:opacity-80 font-mono">
-      {children}
-    </button>
   );
 }

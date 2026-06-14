@@ -79,23 +79,23 @@ export default function OpeningExplorer({ fen, onPlay }: {
   ];
 
   return (
-    <div className="bg-card border border-border rounded-lg flex flex-col min-h-0">
-      <div className="flex items-center gap-1 px-3 py-1.5 bg-base border-b border-border flex-wrap">
+    <div className="bg-card border border-border rounded-xl flex flex-col min-h-0 overflow-hidden">
+      <div className="flex items-center gap-1 px-2.5 py-2 bg-base border-b border-border flex-wrap">
         {tabs.map((s) => (
           <button key={s.id} onClick={() => setSource(s.id)}
-            className={`px-2.5 py-1 rounded text-xs font-medium transition-colors
-              ${source === s.id ? 'bg-accent text-white' : 'text-dim hover:bg-hover'}`}>
+            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all
+              ${source === s.id ? 'bg-accent text-white shadow-sm' : 'text-dim hover:text-fg hover:bg-hover'}`}>
             {s.label}
           </button>
         ))}
-        <span className="ml-auto text-xs text-dim">{loading ? '…' : total ? `${fmtK(total)} partidas` : ''}</span>
+        <span className="ml-auto text-xs text-dim pr-1">{loading ? '…' : total ? `${fmtK(total)} partidas` : ''}</span>
       </div>
 
       <div className="overflow-y-auto" style={{ maxHeight: 260 }}>
         {error && (
           <div className="px-3 py-3 text-dim text-xs flex items-center gap-2">
             {error}
-            <button onClick={() => setRetry((r) => r + 1)} className="bg-hover text-fg px-2 py-0.5 rounded hover:opacity-80">Reintentar</button>
+            <button onClick={() => setRetry((r) => r + 1)} className="bg-hover text-fg px-2 py-1 rounded-lg hover:brightness-110">Reintentar</button>
           </div>
         )}
         {!error && data && data.moves.length === 0 && (

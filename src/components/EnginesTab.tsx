@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { wsCmd } from '@/lib/ws';
 import { useEnginesStore, EngineCfg } from '@/store/enginesStore';
 import { Icon } from './Icon';
+import { Button, Card, Input } from './ui';
 
 function NumberField({ label, value, set, min = 1, max = 1024 }: {
   label: string; value: number; set: (n: number) => void; min?: number; max?: number;
@@ -13,7 +14,7 @@ function NumberField({ label, value, set, min = 1, max = 1024 }: {
       {label}
       <input type="number" value={value} min={min} max={max}
         onChange={(e) => set(Math.max(min, Math.min(max, Number(e.target.value) || min)))}
-        className="bg-base border border-border text-fg rounded-md px-2 py-1.5 text-sm" />
+        className="bg-base border border-border text-fg rounded-lg px-3 py-2 text-sm outline-none focus:border-accent" />
     </label>
   );
 }
@@ -75,19 +76,17 @@ export default function EnginesTab() {
         </div>
 
         {/* Panel derecho */}
-        <div className="flex-1 bg-card border border-border rounded-lg p-5">
+        <Card className="flex-1 p-5">
           {adding ? (
             <div className="flex flex-col gap-3 max-w-lg">
               <h3 className="text-fg font-semibold">Añadir motor UCI</h3>
               <label className="flex flex-col gap-1 text-xs text-dim">Nombre
-                <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="p.ej. Komodo, Leela, módulo HCE…"
-                  className="bg-base border border-border text-fg rounded-md px-2 py-1.5 text-sm" /></label>
+                <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="p.ej. Komodo, Leela, módulo HCE…" /></label>
               <label className="flex flex-col gap-1 text-xs text-dim">Ruta al ejecutable (.exe)
-                <input value={newPath} onChange={(e) => setNewPath(e.target.value)} placeholder="C:\\ruta\\al\\motor.exe"
-                  className="bg-base border border-border text-fg rounded-md px-2 py-1.5 text-sm font-mono" /></label>
+                <Input value={newPath} onChange={(e) => setNewPath(e.target.value)} placeholder="C:\\ruta\\al\\motor.exe" className="font-mono" /></label>
               <p className="text-xs text-dim">Cualquier motor compatible con UCI (incluidos los módulos UCI de tu tesis que usa cutechess).</p>
-              <div className="flex gap-3">
-                <button onClick={addEngine} className="bg-accent text-white px-4 py-1.5 rounded-md text-sm hover:opacity-90">Añadir</button>
+              <div className="flex gap-3 items-center">
+                <Button variant="primary" onClick={addEngine}>Añadir</Button>
                 <button onClick={() => setAdding(false)} className="text-dim text-sm hover:text-fg">Cancelar</button>
               </div>
             </div>
@@ -104,10 +103,9 @@ export default function EnginesTab() {
                       className="text-danger text-sm inline-flex items-center gap-1 hover:opacity-80"><Icon name="trash" size={14} /> Quitar</button>
                   )}
                   {sel.id === activeId
-                    ? <span className="text-accent text-sm">Motor activo</span>
-                    : <button onClick={() => activate(sel)} disabled={busy}
-                        className="bg-accent text-white px-4 py-1.5 rounded-md text-sm hover:opacity-90 disabled:opacity-50">
-                        {busy ? 'Cambiando…' : 'Activar este motor'}</button>}
+                    ? <span className="text-accent text-sm font-medium">Motor activo</span>
+                    : <Button variant="primary" onClick={() => activate(sel)} disabled={busy}>
+                        {busy ? 'Cambiando…' : 'Activar este motor'}</Button>}
                 </div>
               </div>
 
@@ -120,8 +118,7 @@ export default function EnginesTab() {
                 <div className="grid grid-cols-2 gap-4">
                   {sel.kind === 'uci' && !sel.builtin && (
                     <label className="col-span-2 flex flex-col gap-1 text-xs text-dim">Ruta (.exe)
-                      <input value={sel.path ?? ''} onChange={(e) => update(sel.id, { path: e.target.value })}
-                        className="bg-base border border-border text-fg rounded-md px-2 py-1.5 text-sm font-mono" /></label>
+                      <Input value={sel.path ?? ''} onChange={(e) => update(sel.id, { path: e.target.value })} className="font-mono" /></label>
                   )}
                   {sel.id === 'lc0' && (
                     <p className="col-span-2 text-xs text-dim">Leela usa tu <b className="text-fg">RTX 4060</b> (DirectML) con la red T60 incluida.</p>
@@ -133,7 +130,7 @@ export default function EnginesTab() {
               )}
             </>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

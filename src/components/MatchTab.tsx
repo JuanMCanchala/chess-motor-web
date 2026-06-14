@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Icon } from './Icon';
+import { Button, Card, Select } from './ui';
 
 interface Module { id: string; name: string; available: boolean; }
 interface MatchState {
@@ -78,12 +79,11 @@ export default function MatchTab() {
   const pctD = total ? (m.d / total) * 100 : 0;
 
   const Sel = ({ value, set }: { value: string; set: (v: string) => void }) => (
-    <select value={value} onChange={(e) => set(e.target.value)} disabled={m.running}
-      className="bg-base border border-border text-fg rounded-md px-3 py-2 text-sm">
+    <Select value={value} onChange={(e) => set(e.target.value)} disabled={m.running}>
       {modules.map((mod) => <option key={mod.id} value={mod.id} disabled={!mod.available}>
         {mod.name}{mod.available ? '' : ' (no disponible)'}
       </option>)}
-    </select>
+    </Select>
   );
 
   return (
@@ -91,7 +91,7 @@ export default function MatchTab() {
       <h2 className="text-xl font-bold text-fg mb-1 flex items-center gap-2"><Icon name="cpu" size={18} /> Match de módulos</h2>
       <p className="text-dim text-sm mb-5">Enfrenta dos motores/módulos UCI (vía cutechess) y observa el marcador en vivo.</p>
 
-      <div className="bg-card border border-border rounded-lg p-4 flex flex-col gap-4">
+      <Card className="p-4 flex flex-col gap-4">
         <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
           <label className="flex flex-col gap-1 text-xs text-dim">Módulo A<Sel value={a} set={setA} /></label>
           <span className="text-dim pb-2 font-bold">vs</span>
@@ -102,33 +102,25 @@ export default function MatchTab() {
           <label className="flex flex-col gap-1 text-xs text-dim">Partidas
             <input type="number" value={games} min={2} max={1000} disabled={m.running}
               onChange={(e) => setGames(Math.max(2, Math.min(1000, +e.target.value || 2)))}
-              className="bg-base border border-border text-fg rounded-md px-2 py-1.5 text-sm w-24" /></label>
+              className="bg-base border border-border text-fg rounded-lg px-3 py-2 text-sm w-24 outline-none focus:border-accent" /></label>
           <label className="flex flex-col gap-1 text-xs text-dim">Seg/jugada
-            <select value={st} onChange={(e) => setSt(e.target.value)} disabled={m.running}
-              className="bg-base border border-border text-fg rounded-md px-2 py-1.5 text-sm">
+            <Select value={st} onChange={(e) => setSt(e.target.value)} disabled={m.running}>
               {['0.1', '0.5', '1', '2', '5'].map((s) => <option key={s} value={s}>{s}s</option>)}
-            </select></label>
+            </Select></label>
           <label className="flex flex-col gap-1 text-xs text-dim">Concurrencia
-            <select value={conc} onChange={(e) => setConc(+e.target.value)} disabled={m.running}
-              className="bg-base border border-border text-fg rounded-md px-2 py-1.5 text-sm">
+            <Select value={conc} onChange={(e) => setConc(+e.target.value)} disabled={m.running}>
               {[1, 2, 4, 6, 8].map((c) => <option key={c} value={c}>{c}</option>)}
-            </select></label>
+            </Select></label>
           <div className="flex-1" />
-          {!m.running ? (
-            <button onClick={start} className="bg-accent text-white font-semibold px-5 py-2 rounded-md hover:opacity-90 inline-flex items-center gap-1.5">
-              <Icon name="play" size={15} /> Iniciar match
-            </button>
-          ) : (
-            <button onClick={stop} className="bg-danger text-white font-semibold px-5 py-2 rounded-md hover:opacity-90 inline-flex items-center gap-1.5">
-              <Icon name="stop" size={15} /> Parar
-            </button>
-          )}
+          {!m.running
+            ? <Button variant="primary" icon="play" className="px-5 py-2.5" onClick={start}>Iniciar match</Button>
+            : <Button variant="danger" icon="stop" className="px-5 py-2.5" onClick={stop}>Parar</Button>}
         </div>
-      </div>
+      </Card>
 
       {/* Marcador */}
       {(m.running || total > 0) && (
-        <div className="bg-card border border-border rounded-lg p-4 mt-4">
+        <Card className="p-4 mt-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-fg font-semibold">{m.nameA}</span>
             <span className="text-dim text-xs">{m.played}{m.total ? ` / ${m.total}` : ''} partidas{m.running ? ' · jugando…' : ''}</span>
@@ -149,7 +141,7 @@ export default function MatchTab() {
             <div className="text-sm text-dim">Elo Δ ({m.nameA} − {m.nameB}): <span className="text-fg font-mono">{m.elo > 0 ? '+' : ''}{m.elo} ± {m.eloErr}</span></div>
           )}
           {m.last && <div className="text-xs text-dim mt-1">Última: {m.last}</div>}
-        </div>
+        </Card>
       )}
 
       {m.log.length > 0 && (

@@ -54,8 +54,8 @@ export default function Tablebase({ fen, onPlay }: { fen: string; onPlay: (uci: 
   if (!enabled) return null;
 
   return (
-    <div className="bg-card border border-accent/40 rounded-lg overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-1.5 bg-base text-dim text-xs">
+    <div className="bg-card border border-accent/40 rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 bg-base text-dim text-xs">
         <span className="inline-flex items-center gap-1.5"><Icon name="flag" size={12} /> Tablebase (Syzygy)</span>
         {data && (
           <span className={`font-semibold ${COLOR[data.category] ?? 'text-dim'}`}>
